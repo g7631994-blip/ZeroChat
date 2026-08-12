@@ -1,4 +1,4 @@
-name: ZeroChat – Build Funcional SHΔDØW
+name: ZeroChat – Build Funcional SHΔDØW v2
 on:
   push:
     branches: [main]
@@ -27,7 +27,7 @@ jobs:
           mkdir -p gradle/wrapper
 
           # ============================================================
-          # GRADLE WRAPPER & PROPERTIES
+          # GRADLE WRAPPER PROPERTIES (SOLO CONFIG, NO BINARIOS)
           # ============================================================
           cat > gradle/wrapper/gradle-wrapper.properties << 'EOF'
           distributionBase=GRADLE_USER_HOME
@@ -58,29 +58,22 @@ jobs:
           EOF
 
           # ============================================================
-          # SETTINGS.GRADLE.KTS (CORREGIDO)
+          # SETTINGS.GRADLE.KTS
           # ============================================================
           cat > settings.gradle.kts << 'EOF'
           pluginManagement {
-              repositories {
-                  google()
-                  mavenCentral()
-                  gradlePluginPortal()
-              }
+              repositories { google(); mavenCentral(); gradlePluginPortal() }
           }
           dependencyResolutionManagement {
               repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
-              repositories {
-                  google()
-                  mavenCentral()
-              }
+              repositories { google(); mavenCentral() }
           }
           rootProject.name = "ZeroChat"
           include(":app")
           EOF
 
           # ============================================================
-          # APP BUILD.GRADLE.KTS (SINTAXIS CORREGIDA)
+          # APP BUILD.GRADLE.KTS
           # ============================================================
           cat > app/build.gradle.kts << 'EOF'
           plugins {
@@ -88,11 +81,9 @@ jobs:
               id("org.jetbrains.kotlin.android")
               id("org.jetbrains.kotlin.plugin.serialization")
           }
-
           android {
               namespace = "com.zeroclone.app"
               compileSdk = 34
-
               defaultConfig {
                   applicationId = "com.zeroclone.app"
                   minSdk = 24
@@ -101,23 +92,13 @@ jobs:
                   versionName = "1.0.0"
                   vectorDrawables { useSupportLibrary = true }
               }
-
-              buildTypes {
-                  release {
-                      isMinifyEnabled = false
-                      proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
-                  }
-              }
-              compileOptions {
-                  sourceCompatibility = JavaVersion.VERSION_17
-                  targetCompatibility = JavaVersion.VERSION_17
-              }
+              buildTypes { release { isMinifyEnabled = false; proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro") } }
+              compileOptions { sourceCompatibility = JavaVersion.VERSION_17; targetCompatibility = JavaVersion.VERSION_17 }
               kotlinOptions { jvmTarget = "17" }
               buildFeatures { compose = true }
               composeOptions { kotlinCompilerExtensionVersion = "1.5.8" }
               packaging { resources { excludes += "/META-INF/{AL2.0,LGPL2.1}" } }
           }
-
           dependencies {
               val composeBom = platform("androidx.compose:compose-bom:2024.02.00")
               implementation(composeBom)
@@ -138,7 +119,6 @@ jobs:
               implementation("androidx.security:security-crypto:1.1.0-alpha06")
           }
           EOF
-
           touch app/proguard-rules.pro
 
           # ============================================================
@@ -148,26 +128,11 @@ jobs:
           <?xml version="1.0" encoding="utf-8"?>
           <manifest xmlns:android="http://schemas.android.com/apk/res/android">
               <uses-permission android:name="android.permission.INTERNET" />
-              <application
-                  android:name=".ZeroChatApplication"
-                  android:allowBackup="true"
-                  android:icon="@mipmap/ic_launcher"
-                  android:label="@string/app_name"
-                  android:supportsRtl="true"
-                  android:theme="@style/Theme.ZeroChat">
-                  <activity
-                      android:name=".MainActivity"
-                      android:exported="true"
-                      android:theme="@style/Theme.ZeroChat">
-                      <intent-filter>
-                          <action android:name="android.intent.action.MAIN" />
-                          <category android:name="android.intent.category.LAUNCHER" />
-                      </intent-filter>
+              <application android:name=".ZeroChatApplication" android:allowBackup="true" android:icon="@mipmap/ic_launcher" android:label="@string/app_name" android:supportsRtl="true" android:theme="@style/Theme.ZeroChat">
+                  <activity android:name=".MainActivity" android:exported="true" android:theme="@style/Theme.ZeroChat">
+                      <intent-filter><action android:name="android.intent.action.MAIN" /><category android:name="android.intent.category.LAUNCHER" /></intent-filter>
                   </activity>
-                  <activity
-                      android:name=".presentation.screen.webview.WebViewActivity"
-                      android:configChanges="orientation|screenSize"
-                      android:exported="false" />
+                  <activity android:name=".presentation.screen.webview.WebViewActivity" android:configChanges="orientation|screenSize" android:exported="false" />
               </application>
           </manifest>
           EOF
@@ -177,7 +142,6 @@ jobs:
           # ============================================================
           cat > app/src/main/java/com/zeroclone/app/domain/model/Provider.kt << 'EOF'
           package com.zeroclone.app.domain.model
-
           enum class Provider(val displayName: String, val url: String, val defaultModel: String) {
               DeepSeek("DeepSeek", "https://chat.deepseek.com/", "deepseek-chat"),
               QwenIntl("Qwen International", "https://chat.qwen.ai/", "Qwen-3.5-Plus"),
@@ -190,83 +154,38 @@ jobs:
 
           cat > app/src/main/java/com/zeroclone/app/domain/model/Message.kt << 'EOF'
           package com.zeroclone.app.domain.model
-
           import kotlinx.serialization.Serializable
-
-          @Serializable
-          data class Message(
-              val id: String = java.util.UUID.randomUUID().toString(),
-              val role: Role,
-              val content: String,
-              val timestamp: Long = System.currentTimeMillis()
-          )
-
-          @Serializable
-          enum class Role { USER, ASSISTANT }
+          @Serializable data class Message(val id: String = java.util.UUID.randomUUID().toString(), val role: Role, val content: String, val timestamp: Long = System.currentTimeMillis())
+          @Serializable enum class Role { USER, ASSISTANT }
           EOF
 
           cat > app/src/main/java/com/zeroclone/app/domain/model/Chat.kt << 'EOF'
           package com.zeroclone.app.domain.model
-
           import kotlinx.serialization.Serializable
-
-          @Serializable
-          data class Chat(
-              val id: String = java.util.UUID.randomUUID().toString(),
-              val providerName: String,
-              val model: String,
-              val messages: List<Message> = emptyList(),
-              val title: String = "Nueva conversación"
-          )
+          @Serializable data class Chat(val id: String = java.util.UUID.randomUUID().toString(), val providerName: String, val model: String, val messages: List<Message> = emptyList(), val title: String = "Nueva conversación")
           EOF
 
           cat > app/src/main/java/com/zeroclone/app/domain/repository/AuthRepository.kt << 'EOF'
           package com.zeroclone.app.domain.repository
-
           import com.zeroclone.app.domain.model.Provider
-
-          interface AuthRepository {
-              suspend fun saveToken(provider: Provider, token: String)
-              suspend fun getToken(provider: Provider): String?
-              suspend fun hasToken(provider: Provider): Boolean
-          }
+          interface AuthRepository { suspend fun saveToken(provider: Provider, token: String); suspend fun getToken(provider: Provider): String?; suspend fun hasToken(provider: Provider): Boolean }
           EOF
 
           cat > app/src/main/java/com/zeroclone/app/domain/repository/ChatRepository.kt << 'EOF'
           package com.zeroclone.app.domain.repository
-
-          import com.zeroclone.app.domain.model.Chat
-          import com.zeroclone.app.domain.model.Message
-          import kotlinx.coroutines.flow.Flow
-
-          interface ChatRepository {
-              fun observeChats(): Flow<List<Chat>>
-              suspend fun createChat(providerName: String, model: String): Chat
-              suspend fun addMessage(chatId: String, message: Message)
-              suspend fun generateResponse(chatId: String, userContent: String): Message
-          }
+          import com.zeroclone.app.domain.model.Chat; import com.zeroclone.app.domain.model.Message; import kotlinx.coroutines.flow.Flow
+          interface ChatRepository { fun observeChats(): Flow<List<Chat>>; suspend fun createChat(providerName: String, model: String): Chat; suspend fun addMessage(chatId: String, message: Message); suspend fun generateResponse(chatId: String, userContent: String): Message }
           EOF
 
           cat > app/src/main/java/com/zeroclone/app/domain/usecase/ExtractTokenUseCase.kt << 'EOF'
           package com.zeroclone.app.domain.usecase
-
-          import com.zeroclone.app.domain.model.Provider
-          import com.zeroclone.app.domain.repository.AuthRepository
-
+          import com.zeroclone.app.domain.model.Provider; import com.zeroclone.app.domain.repository.AuthRepository
           class ExtractTokenUseCase(private val authRepository: AuthRepository) {
               suspend operator fun invoke(provider: Provider, rawJson: String?): Result<Unit> {
                   if (rawJson.isNullOrBlank()) return Result.failure(Exception("Empty storage"))
-                  // Lógica simplificada: buscamos cualquier valor tipo token en el JSON
                   val tokenRegex = Regex(""""(?:token|access_token|jwt)"\s*:\s*"([^"]{20,})"""")
-                  val match = tokenRegex.find(rawJson)
-                  val token = match?.groupValues?.get(1) ?: rawJson.take(50) // Fallback demo
-                  
-                  return if (token.isNotBlank()) {
-                      authRepository.saveToken(provider, token)
-                      Result.success(Unit)
-                  } else {
-                      Result.failure(Exception("No valid token found in storage"))
-                  }
+                  val match = tokenRegex.find(rawJson); val token = match?.groupValues?.get(1) ?: rawJson.take(50)
+                  return if (token.isNotBlank()) { authRepository.saveToken(provider, token); Result.success(Unit) } else Result.failure(Exception("No valid token found"))
               }
           }
           EOF
@@ -276,62 +195,28 @@ jobs:
           # ============================================================
           cat > app/src/main/java/com/zeroclone/app/data/datasource/local/TokenStorage.kt << 'EOF'
           package com.zeroclone.app.data.datasource.local
-
-          import android.content.Context
-          import androidx.security.crypto.EncryptedSharedPreferences
-          import androidx.security.crypto.MasterKey
-
+          import android.content.Context; import androidx.security.crypto.EncryptedSharedPreferences; import androidx.security.crypto.MasterKey
           class TokenStorage(context: Context) {
-              private val masterKey = MasterKey.Builder(context)
-                  .setKeyScheme(MasterKey.KeyScheme.AES256_GCM).build()
-
-              private val prefs = EncryptedSharedPreferences.create(
-                  context, "zero_tokens_secure", masterKey,
-                  EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
-                  EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
-              )
-
-              fun save(key: String, value: String) = prefs.edit().putString(key, value).apply()
-              fun get(key: String): String? = prefs.getString(key, null)
+              private val masterKey = MasterKey.Builder(context).setKeyScheme(MasterKey.KeyScheme.AES256_GCM).build()
+              private val prefs = EncryptedSharedPreferences.create(context, "zero_tokens_secure", masterKey, EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV, EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM)
+              fun save(key: String, value: String) = prefs.edit().putString(key, value).apply(); fun get(key: String): String? = prefs.getString(key, null)
           }
           EOF
 
           cat > app/src/main/java/com/zeroclone/app/data/datasource/local/ChatLocalDataSource.kt << 'EOF'
           package com.zeroclone.app.data.datasource.local
-
-          import android.content.Context
-          import androidx.datastore.preferences.core.edit
-          import androidx.datastore.preferences.core.stringPreferencesKey
-          import androidx.datastore.preferences.preferencesDataStore
-          import com.zeroclone.app.domain.model.Chat
-          import kotlinx.coroutines.flow.Flow
-          import kotlinx.coroutines.flow.map
-          import kotlinx.serialization.encodeToString
-          import kotlinx.serialization.json.Json
-
+          import android.content.Context; import androidx.datastore.preferences.core.edit; import androidx.datastore.preferences.core.stringPreferencesKey; import androidx.datastore.preferences.preferencesDataStore; import com.zeroclone.app.domain.model.Chat; import kotlinx.coroutines.flow.Flow; import kotlinx.coroutines.flow.map; import kotlinx.serialization.encodeToString; import kotlinx.serialization.json.Json
           val Context.chatDataStore by preferencesDataStore(name = "chats_v1")
-
           class ChatLocalDataSource(private val context: Context) {
-              private val json = Json { ignoreUnknownKeys = true }
-              private val KEY = stringPreferencesKey("all_chats")
-
-              val chats: Flow<List<Chat>> = context.chatDataStore.data.map { prefs ->
-                  prefs[KEY]?.let { json.decodeFromString<List<Chat>>(it) } ?: emptyList()
-              }
-
-              suspend fun save(chats: List<Chat>) {
-                  context.chatDataStore.edit { it[KEY] = json.encodeToString(chats) }
-              }
+              private val json = Json { ignoreUnknownKeys = true }; private val KEY = stringPreferencesKey("all_chats")
+              val chats: Flow<List<Chat>> = context.chatDataStore.data.map { it[KEY]?.let { json.decodeFromString<List<Chat>>(it) } ?: emptyList() }
+              suspend fun save(chats: List<Chat>) { context.chatDataStore.edit { it[KEY] = json.encodeToString(chats) } }
           }
           EOF
 
           cat > app/src/main/java/com/zeroclone/app/data/repository/AuthRepositoryImpl.kt << 'EOF'
           package com.zeroclone.app.data.repository
-
-          import com.zeroclone.app.data.datasource.local.TokenStorage
-          import com.zeroclone.app.domain.model.Provider
-          import com.zeroclone.app.domain.repository.AuthRepository
-
+          import com.zeroclone.app.data.datasource.local.TokenStorage; import com.zeroclone.app.domain.model.Provider; import com.zeroclone.app.domain.repository.AuthRepository
           class AuthRepositoryImpl(private val storage: TokenStorage) : AuthRepository {
               override suspend fun saveToken(provider: Provider, token: String) = storage.save(provider.name, token)
               override suspend fun getToken(provider: Provider): String? = storage.get(provider.name)
@@ -341,44 +226,12 @@ jobs:
 
           cat > app/src/main/java/com/zeroclone/app/data/repository/ChatRepositoryImpl.kt << 'EOF'
           package com.zeroclone.app.data.repository
-
-          import com.zeroclone.app.data.datasource.local.ChatLocalDataSource
-          import com.zeroclone.app.domain.model.Chat
-          import com.zeroclone.app.domain.model.Message
-          import com.zeroclone.app.domain.model.Role
-          import com.zeroclone.app.domain.repository.ChatRepository
-          import kotlinx.coroutines.delay
-          import kotlinx.coroutines.flow.Flow
-          import kotlinx.coroutines.flow.first
-
+          import com.zeroclone.app.data.datasource.local.ChatLocalDataSource; import com.zeroclone.app.domain.model.*; import com.zeroclone.app.domain.repository.ChatRepository; import kotlinx.coroutines.delay; import kotlinx.coroutines.flow.Flow; import kotlinx.coroutines.flow.first
           class ChatRepositoryImpl(private val local: ChatLocalDataSource) : ChatRepository {
               override fun observeChats(): Flow<List<Chat>> = local.chats
-
-              override suspend fun createChat(providerName: String, model: String): Chat {
-                  val new = Chat(providerName = providerName, model = model)
-                  val current = local.chats.first()
-                  local.save(listOf(new) + current)
-                  return new
-              }
-
-              override suspend fun addMessage(chatId: String, message: Message) {
-                  val current = local.chats.first().toMutableList()
-                  val idx = current.indexOfFirst { it.id == chatId }
-                  if (idx != -1) {
-                      current[idx] = current[idx].copy(messages = current[idx].messages + message)
-                      local.save(current)
-                  }
-              }
-
-              override suspend fun generateResponse(chatId: String, userContent: String): Message {
-                  // SIMULACIÓN DE BACKEND: En producción, aquí iría la llamada Retrofit a la API real
-                  delay(800) // Simular latencia de red
-                  val chat = local.chats.first().find { it.id == chatId }
-                  val responseText = "[${chat?.providerName ?: "AI"}] Respuesta simulada para: \"$userContent\".\n\nNota: Esta app usa un backend simulado para demostración. Integra tu API Key real en ChatRepositoryImpl para producción."
-                  val msg = Message(role = Role.ASSISTANT, content = responseText)
-                  addMessage(chatId, msg)
-                  return msg
-              }
+              override suspend fun createChat(providerName: String, model: String): Chat { val new = Chat(providerName = providerName, model = model); local.save(listOf(new) + local.chats.first()); return new }
+              override suspend fun addMessage(chatId: String, message: Message) { val current = local.chats.first().toMutableList(); val idx = current.indexOfFirst { it.id == chatId }; if (idx != -1) { current[idx] = current[idx].copy(messages = current[idx].messages + message); local.save(current) } }
+              override suspend fun generateResponse(chatId: String, userContent: String): Message { delay(800); val chat = local.chats.first().find { it.id == chatId }; val msg = Message(role = Role.ASSISTANT, content = "[${chat?.providerName ?: "AI"}] Respuesta simulada para: \"$userContent\".\n\nNota: Backend simulado. Integra API real en producción."); addMessage(chatId, msg); return msg }
           }
           EOF
 
@@ -387,339 +240,78 @@ jobs:
           # ============================================================
           cat > app/src/main/java/com/zeroclone/app/di/AppModule.kt << 'EOF'
           package com.zeroclone.app.di
-
-          import com.zeroclone.app.data.datasource.local.ChatLocalDataSource
-          import com.zeroclone.app.data.datasource.local.TokenStorage
-          import com.zeroclone.app.data.repository.AuthRepositoryImpl
-          import com.zeroclone.app.data.repository.ChatRepositoryImpl
-          import com.zeroclone.app.domain.repository.AuthRepository
-          import com.zeroclone.app.domain.repository.ChatRepository
-          import com.zeroclone.app.domain.usecase.ExtractTokenUseCase
-          import org.koin.android.ext.koin.androidContext
-          import org.koin.dsl.module
-
-          val appModule = module {
-              single { TokenStorage(androidContext()) }
-              single { ChatLocalDataSource(androidContext()) }
-              single<AuthRepository> { AuthRepositoryImpl(get()) }
-              single<ChatRepository> { ChatRepositoryImpl(get()) }
-              factory { ExtractTokenUseCase(get()) }
-          }
+          import com.zeroclone.app.data.datasource.local.*; import com.zeroclone.app.data.repository.*; import com.zeroclone.app.domain.repository.*; import com.zeroclone.app.domain.usecase.ExtractTokenUseCase; import org.koin.android.ext.koin.androidContext; import org.koin.dsl.module
+          val appModule = module { single { TokenStorage(androidContext()) }; single { ChatLocalDataSource(androidContext()) }; single<AuthRepository> { AuthRepositoryImpl(get()) }; single<ChatRepository> { ChatRepositoryImpl(get()) }; factory { ExtractTokenUseCase(get()) } }
           EOF
 
           cat > app/src/main/java/com/zeroclone/app/ZeroChatApplication.kt << 'EOF'
           package com.zeroclone.app
-
-          import android.app.Application
-          import com.zeroclone.app.di.appModule
-          import org.koin.android.ext.koin.androidContext
-          import org.koin.core.context.startKoin
-
-          class ZeroChatApplication : Application() {
-              override fun onCreate() {
-                  super.onCreate()
-                  startKoin { androidContext(this@ZeroChatApplication); modules(appModule) }
-              }
-          }
+          import android.app.Application; import com.zeroclone.app.di.appModule; import org.koin.android.ext.koin.androidContext; import org.koin.core.context.startKoin
+          class ZeroChatApplication : Application() { override fun onCreate() { super.onCreate(); startKoin { androidContext(this@ZeroChatApplication); modules(appModule) } } }
           EOF
 
           # ============================================================
-          # PRESENTATION: THEME & NAVIGATION
+          # PRESENTATION
           # ============================================================
           cat > app/src/main/java/com/zeroclone/app/presentation/theme/Theme.kt << 'EOF'
           package com.zeroclone.app.presentation.theme
-
-          import androidx.compose.material3.MaterialTheme
-          import androidx.compose.material3.darkColorScheme
-          import androidx.compose.runtime.Composable
-          import androidx.compose.ui.graphics.Color
-
-          private val DarkScheme = darkColorScheme(
-              primary = Color(0xFF4D6BFE), background = Color(0xFF0F0F0F),
-              surface = Color(0xFF1E1E1E), onBackground = Color(0xFFE3E3E3),
-              onSurface = Color(0xFFE3E3E3)
-          )
-
-          @Composable
-          fun ZeroChatTheme(content: @Composable () -> Unit) {
-              MaterialTheme(colorScheme = DarkScheme, content = content)
-          }
+          import androidx.compose.material3.*; import androidx.compose.runtime.Composable; import androidx.compose.ui.graphics.Color
+          private val DarkScheme = darkColorScheme(primary = Color(0xFF4D6BFE), background = Color(0xFF0F0F0F), surface = Color(0xFF1E1E1E), onBackground = Color(0xFFE3E3E3), onSurface = Color(0xFFE3E3E3))
+          @Composable fun ZeroChatTheme(content: @Composable () -> Unit) { MaterialTheme(colorScheme = DarkScheme, content = content) }
           EOF
 
           cat > app/src/main/java/com/zeroclone/app/presentation/navigation/NavGraph.kt << 'EOF'
           package com.zeroclone.app.presentation.navigation
-
-          import androidx.compose.runtime.Composable
-          import androidx.navigation.NavHostController
-          import androidx.navigation.compose.NavHost
-          import androidx.navigation.compose.composable
-          import com.zeroclone.app.presentation.screen.chat.ChatScreen
-          import com.zeroclone.app.presentation.screen.login.LoginScreen
-
+          import androidx.compose.runtime.Composable; import androidx.navigation.NavHostController; import androidx.navigation.compose.*; import com.zeroclone.app.presentation.screen.chat.ChatScreen; import com.zeroclone.app.presentation.screen.login.LoginScreen
           object Routes { const val LOGIN = "login"; const val CHAT = "chat/{providerName}" }
-
-          @Composable
-          fun ZeroNavGraph(nav: NavHostController) {
-              NavHost(nav, startDestination = Routes.LOGIN) {
-                  composable(Routes.LOGIN) { LoginScreen(onSelect = { nav.navigate("chat/${it.name}") }) }
-                  composable(Routes.CHAT) { backStack ->
-                      ChatScreen(backStack.arguments?.getString("providerName") ?: "")
-                  }
-              }
-          }
+          @Composable fun ZeroNavGraph(nav: NavHostController) { NavHost(nav, startDestination = Routes.LOGIN) { composable(Routes.LOGIN) { LoginScreen(onSelect = { nav.navigate("chat/${it.name}") }) }; composable(Routes.CHAT) { bs -> ChatScreen(bs.arguments?.getString("providerName") ?: "") } } }
           EOF
 
-          # ============================================================
-          # SCREENS: LOGIN
-          # ============================================================
           cat > app/src/main/java/com/zeroclone/app/presentation/screen/login/LoginScreen.kt << 'EOF'
           package com.zeroclone.app.presentation.screen.login
-
-          import androidx.compose.foundation.clickable
-          import androidx.compose.foundation.layout.*
-          import androidx.compose.foundation.lazy.grid.GridCells
-          import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-          import androidx.compose.foundation.lazy.grid.items
-          import androidx.compose.material.icons.Icons
-          import androidx.compose.material.icons.filled.SmartToy
-          import androidx.compose.material3.*
-          import androidx.compose.runtime.Composable
-          import androidx.compose.ui.Alignment
-          import androidx.compose.ui.Modifier
-          import androidx.compose.ui.text.font.FontWeight
-          import androidx.compose.ui.unit.dp
-          import com.zeroclone.app.domain.model.Provider
-
-          @OptIn(ExperimentalMaterial3Api::class)
-          @Composable
-          fun LoginScreen(onSelect: (Provider) -> Unit) {
-              Scaffold(topBar = { TopAppBar(title = { Text("ZeroChat", fontWeight = FontWeight.Bold) }) }) { p ->
-                  LazyVerticalGrid(GridCells.Adaptive(150.dp), Modifier.padding(p).padding(12.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                      items(Provider.entries) { prov ->
-                          Card(Modifier.fillMaxWidth().height(120.dp).clickable { onSelect(prov) }, colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)) {
-                              Column(Modifier.fillMaxSize().padding(12.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
-                                  Icon(Icons.Default.SmartToy, null, Modifier.size(32.dp), tint = MaterialTheme.colorScheme.primary)
-                                  Spacer(Modifier.height(8.dp))
-                                  Text(prov.displayName, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium)
-                              }
-                          }
-                      }
-                  }
-              }
-          }
+          import androidx.compose.foundation.clickable; import androidx.compose.foundation.layout.*; import androidx.compose.foundation.lazy.grid.*; import androidx.compose.material.icons.Icons; import androidx.compose.material.icons.filled.SmartToy; import androidx.compose.material3.*; import androidx.compose.runtime.Composable; import androidx.compose.ui.Alignment; import androidx.compose.ui.Modifier; import androidx.compose.ui.text.font.FontWeight; import androidx.compose.ui.unit.dp; import com.zeroclone.app.domain.model.Provider
+          @OptIn(ExperimentalMaterial3Api::class) @Composable fun LoginScreen(onSelect: (Provider) -> Unit) { Scaffold(topBar = { TopAppBar(title = { Text("ZeroChat", fontWeight = FontWeight.Bold) }) }) { p -> LazyVerticalGrid(GridCells.Adaptive(150.dp), Modifier.padding(p).padding(12.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) { items(Provider.entries) { prov -> Card(Modifier.fillMaxWidth().height(120.dp).clickable { onSelect(prov) }, colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)) { Column(Modifier.fillMaxSize().padding(12.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) { Icon(Icons.Default.SmartToy, null, Modifier.size(32.dp), tint = MaterialTheme.colorScheme.primary); Spacer(Modifier.height(8.dp)); Text(prov.displayName, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium) } } } } } }
           EOF
 
-          # ============================================================
-          # SCREENS: CHAT (FUNCIONAL)
-          # ============================================================
           cat > app/src/main/java/com/zeroclone/app/presentation/screen/chat/ChatViewModel.kt << 'EOF'
           package com.zeroclone.app.presentation.screen.chat
-
-          import androidx.lifecycle.ViewModel
-          import androidx.lifecycle.viewModelScope
-          import com.zeroclone.app.domain.model.Chat
-          import com.zeroclone.app.domain.model.Message
-          import com.zeroclone.app.domain.model.Role
-          import com.zeroclone.app.domain.repository.ChatRepository
-          import kotlinx.coroutines.flow.MutableStateFlow
-          import kotlinx.coroutines.flow.StateFlow
-          import kotlinx.coroutines.launch
-
-          class ChatViewModel(private val repo: ChatRepository) : ViewModel() {
-              private val _chat = MutableStateFlow<Chat?>(null)
-              val chat: StateFlow<Chat?> = _chat
-
-              fun init(providerName: String) {
-                  viewModelScope.launch {
-                      repo.observeChats().collect { list ->
-                          val existing = list.find { it.providerName == providerName }
-                          _chat.value = existing ?: repo.createChat(providerName, "default")
-                      }
-                  }
-              }
-
-              fun send(text: String) {
-                  val c = _chat.value ?: return
-                  viewModelScope.launch {
-                      repo.addMessage(c.id, Message(role = Role.USER, content = text))
-                      repo.generateResponse(c.id, text)
-                  }
-              }
-          }
+          import androidx.lifecycle.ViewModel; import androidx.lifecycle.viewModelScope; import com.zeroclone.app.domain.model.*; import com.zeroclone.app.domain.repository.ChatRepository; import kotlinx.coroutines.flow.MutableStateFlow; import kotlinx.coroutines.flow.StateFlow; import kotlinx.coroutines.launch
+          class ChatViewModel(private val repo: ChatRepository) : ViewModel() { private val _chat = MutableStateFlow<Chat?>(null); val chat: StateFlow<Chat?> = _chat; fun init(providerName: String) { viewModelScope.launch { repo.observeChats().collect { list -> _chat.value = list.find { it.providerName == providerName } ?: repo.createChat(providerName, "default") } } }; fun send(text: String) { val c = _chat.value ?: return; viewModelScope.launch { repo.addMessage(c.id, Message(role = Role.USER, content = text)); repo.generateResponse(c.id, text) } } }
           EOF
 
           cat > app/src/main/java/com/zeroclone/app/presentation/screen/chat/ChatScreen.kt << 'EOF'
           package com.zeroclone.app.presentation.screen.chat
-
-          import androidx.compose.foundation.background
-          import androidx.compose.foundation.layout.*
-          import androidx.compose.foundation.lazy.LazyColumn
-          import androidx.compose.foundation.lazy.items
-          import androidx.compose.foundation.shape.RoundedCornerShape
-          import androidx.compose.material.icons.Icons
-          import androidx.compose.material.icons.filled.Send
-          import androidx.compose.material3.*
-          import androidx.compose.runtime.*
-          import androidx.compose.ui.Alignment
-          import androidx.compose.ui.Modifier
-          import androidx.compose.ui.draw.clip
-          import androidx.compose.ui.unit.dp
-          import com.zeroclone.app.domain.model.Message
-          import com.zeroclone.app.domain.model.Role
-          import org.koin.androidx.compose.koinViewModel
-
-          @OptIn(ExperimentalMaterial3Api::class)
-          @Composable
-          fun ChatScreen(providerName: String, vm: ChatViewModel = koinViewModel()) {
-              LaunchedEffect(providerName) { vm.init(providerName) }
-              val chat by vm.chat.collectAsState()
-              var input by remember { mutableStateOf("") }
-
-              Scaffold(
-                  topBar = { TopAppBar(title = { Text(providerName) }, colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.surface)) },
-                  bottomBar = {
-                      Surface(shadowElevation = 8.dp) {
-                          Row(Modifier.padding(12.dp).fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                              OutlinedTextField(input, { input = it }, Modifier.weight(1f), placeholder = { Text("Mensaje...") }, shape = RoundedCornerShape(24.dp), maxLines = 4)
-                              Spacer(Modifier.width(8.dp))
-                              IconButton({ if (input.isNotBlank()) { vm.send(input.trim()); input = "" } }) { Icon(Icons.Default.Send, null, tint = MaterialTheme.colorScheme.primary) }
-                          }
-                      }
-                  }
-              ) { p ->
-                  LazyColumn(Modifier.padding(p).fillMaxSize().padding(horizontal = 16.dp, vertical = 8.dp), reverseLayout = true) {
-                      chat?.messages?.reversed()?.let { msgs ->
-                          items(msgs, key = { it.id }) { msg ->
-                              val isUser = msg.role == Role.USER
-                              Row(Modifier.fillMaxWidth().padding(vertical = 4.dp), horizontalArrangement = if (isUser) Arrangement.End else Arrangement.Start) {
-                                  Surface(Modifier.widthIn(max = 300.dp).clip(RoundedCornerShape(16.dp)), color = if (isUser) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant) {
-                                      Text(msg.content, Modifier.padding(12.dp), color = if (isUser) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant)
-                                  }
-                              }
-                          }
-                      }
-                  }
-              }
-          }
+          import androidx.compose.foundation.layout.*; import androidx.compose.foundation.lazy.LazyColumn; import androidx.compose.foundation.lazy.items; import androidx.compose.foundation.shape.RoundedCornerShape; import androidx.compose.material.icons.Icons; import androidx.compose.material.icons.filled.Send; import androidx.compose.material3.*; import androidx.compose.runtime.*; import androidx.compose.ui.Alignment; import androidx.compose.ui.Modifier; import androidx.compose.ui.draw.clip; import androidx.compose.ui.unit.dp; import com.zeroclone.app.domain.model.*; import org.koin.androidx.compose.koinViewModel
+          @OptIn(ExperimentalMaterial3Api::class) @Composable fun ChatScreen(providerName: String, vm: ChatViewModel = koinViewModel()) { LaunchedEffect(providerName) { vm.init(providerName) }; val chat by vm.chat.collectAsState(); var input by remember { mutableStateOf("") }; Scaffold(topBar = { TopAppBar(title = { Text(providerName) }, colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.surface)) }, bottomBar = { Surface(shadowElevation = 8.dp) { Row(Modifier.padding(12.dp).fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) { OutlinedTextField(input, { input = it }, Modifier.weight(1f), placeholder = { Text("Mensaje...") }, shape = RoundedCornerShape(24.dp), maxLines = 4); Spacer(Modifier.width(8.dp)); IconButton({ if (input.isNotBlank()) { vm.send(input.trim()); input = "" } }) { Icon(Icons.Default.Send, null, tint = MaterialTheme.colorScheme.primary) } } } }) { p -> LazyColumn(Modifier.padding(p).fillMaxSize().padding(horizontal = 16.dp, vertical = 8.dp), reverseLayout = true) { chat?.messages?.reversed()?.let { msgs -> items(msgs, key = { it.id }) { msg -> val isUser = msg.role == Role.USER; Row(Modifier.fillMaxWidth().padding(vertical = 4.dp), horizontalArrangement = if (isUser) Arrangement.End else Arrangement.Start) { Surface(Modifier.widthIn(max = 300.dp).clip(RoundedCornerShape(16.dp)), color = if (isUser) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant) { Text(msg.content, Modifier.padding(12.dp), color = if (isUser) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant) } } } } } } }
           EOF
 
-          # ============================================================
-          # WEBVIEW ACTIVITY (EXTRACCIÓN REAL VIA JS BRIDGE)
-          # ============================================================
           cat > app/src/main/java/com/zeroclone/app/presentation/screen/webview/WebViewActivity.kt << 'EOF'
           package com.zeroclone.app.presentation.screen.webview
-
-          import android.annotation.SuppressLint
-          import android.os.Bundle
-          import android.webkit.WebResourceRequest
-          import android.webkit.WebView
-          import android.webkit.WebViewClient
-          import androidx.activity.ComponentActivity
-          import androidx.activity.compose.setContent
-          import androidx.compose.foundation.layout.fillMaxSize
-          import androidx.compose.foundation.layout.padding
-          import androidx.compose.material3.*
-          import androidx.compose.runtime.*
-          import androidx.compose.ui.Modifier
-          import androidx.compose.ui.viewinterop.AndroidView
-          import com.zeroclone.app.domain.model.Provider
-          import com.zeroclone.app.domain.usecase.ExtractTokenUseCase
-          import kotlinx.coroutines.MainScope
-          import kotlinx.coroutines.launch
-          import org.koin.android.ext.android.inject
-
-          class WebViewActivity : ComponentActivity() {
-              private val extractUseCase: ExtractTokenUseCase by inject()
-
-              @SuppressLint("SetJavaScriptEnabled")
-              override fun onCreate(savedInstanceState: Bundle?) {
-                  super.onCreate(savedInstanceState)
-                  val providerName = intent.getStringExtra("PROVIDER") ?: return finish()
-                  val provider = Provider.valueOf(providerName)
-
-                  setContent {
-                      var extracted by remember { mutableStateOf(false) }
-                      Scaffold(topBar = { TopAppBar(title = { Text("Auth: ${provider.displayName}") }) }) { p ->
-                          AndroidView(Modifier.fillMaxSize().padding(p), factory = { ctx ->
-                              WebView(ctx).apply {
-                                  settings.javaScriptEnabled = true
-                                  settings.domStorageEnabled = true
-                                  webViewClient = object : WebViewClient() {
-                                      override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?) = false
-                                      override fun onPageFinished(view: WebView?, url: String?) {
-                                          if (!extracted && url?.contains(provider.url.substringAfter("//")) == true) {
-                                              MainScope().launch {
-                                                  // JS Bridge: Extrae localStorage y sessionStorage como JSON
-                                                  val js = "(function(){try{return JSON.stringify({ls:localStorage,ss:sessionStorage})}catch(e){return '{}'}})()"
-                                                  evaluateJavascript(js) { result ->
-                                                      val clean = result?.removeSurrounding("\"")?.replace("\\\"", "\"")
-                                                      extractUseCase(provider, clean)
-                                                      extracted = true
-                                                      finish()
-                                                  }
-                                              }
-                                          }
-                                      }
-                                  }
-                                  loadUrl(provider.url)
-                              }
-                          })
-                      }
-                  }
-              }
-          }
+          import android.annotation.SuppressLint; import android.os.Bundle; import android.webkit.*; import androidx.activity.ComponentActivity; import androidx.activity.compose.setContent; import androidx.compose.foundation.layout.*; import androidx.compose.material3.*; import androidx.compose.runtime.*; import androidx.compose.ui.Modifier; import androidx.compose.ui.viewinterop.AndroidView; import com.zeroclone.app.domain.model.Provider; import com.zeroclone.app.domain.usecase.ExtractTokenUseCase; import kotlinx.coroutines.MainScope; import kotlinx.coroutines.launch; import org.koin.android.ext.android.inject
+          class WebViewActivity : ComponentActivity() { private val extractUseCase: ExtractTokenUseCase by inject(); @SuppressLint("SetJavaScriptEnabled") override fun onCreate(savedInstanceState: Bundle?) { super.onCreate(savedInstanceState); val providerName = intent.getStringExtra("PROVIDER") ?: return finish(); val provider = Provider.valueOf(providerName); setContent { var extracted by remember { mutableStateOf(false) }; Scaffold(topBar = { TopAppBar(title = { Text("Auth: ${provider.displayName}") }) }) { p -> AndroidView(Modifier.fillMaxSize().padding(p), factory = { ctx -> WebView(ctx).apply { settings.javaScriptEnabled = true; settings.domStorageEnabled = true; webViewClient = object : WebViewClient() { override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?) = false; override fun onPageFinished(view: WebView?, url: String?) { if (!extracted && url?.contains(provider.url.substringAfter("//")) == true) { MainScope().launch { evaluateJavascript("(function(){try{return JSON.stringify({ls:localStorage,ss:sessionStorage})}catch(e){return '{}'}})()") { result -> val clean = result?.removeSurrounding("\"")?.replace("\\\"", "\""); extractUseCase(provider, clean); extracted = true; finish() } } } } }; loadUrl(provider.url) } }) } } } }
           EOF
 
-          # ============================================================
-          # MAIN ACTIVITY & RESOURCES
-          # ============================================================
           cat > app/src/main/java/com/zeroclone/app/MainActivity.kt << 'EOF'
           package com.zeroclone.app
-
-          import android.os.Bundle
-          import androidx.activity.ComponentActivity
-          import androidx.activity.compose.setContent
-          import androidx.compose.foundation.layout.fillMaxSize
-          import androidx.compose.material3.Surface
-          import androidx.compose.ui.Modifier
-          import androidx.navigation.compose.rememberNavController
-          import com.zeroclone.app.presentation.navigation.ZeroNavGraph
-          import com.zeroclone.app.presentation.theme.ZeroChatTheme
-
-          class MainActivity : ComponentActivity() {
-              override fun onCreate(savedInstanceState: Bundle?) {
-                  super.onCreate(savedInstanceState)
-                  setContent {
-                      ZeroChatTheme {
-                          Surface(Modifier.fillMaxSize()) {
-                              ZeroNavGraph(rememberNavController())
-                          }
-                      }
-                  }
-              }
-          }
+          import android.os.Bundle; import androidx.activity.ComponentActivity; import androidx.activity.compose.setContent; import androidx.compose.foundation.layout.fillMaxSize; import androidx.compose.material3.Surface; import androidx.compose.ui.Modifier; import androidx.navigation.compose.rememberNavController; import com.zeroclone.app.presentation.navigation.ZeroNavGraph; import com.zeroclone.app.presentation.theme.ZeroChatTheme
+          class MainActivity : ComponentActivity() { override fun onCreate(savedInstanceState: Bundle?) { super.onCreate(savedInstanceState); setContent { ZeroChatTheme { Surface(Modifier.fillMaxSize()) { ZeroNavGraph(rememberNavController()) } } } } }
           EOF
 
           cat > app/src/main/res/values/strings.xml << 'EOF'
           <resources><string name="app_name">ZeroChat</string></resources>
           EOF
-
           cat > app/src/main/res/values/themes.xml << 'EOF'
-          <resources>
-              <style name="Theme.ZeroChat" parent="android:Theme.Material.NoActionBar">
-                  <item name="android:statusBarColor">@android:color/transparent</item>
-                  <item name="android:navigationBarColor">@android:color/transparent</item>
-              </style>
-          </resources>
+          <resources><style name="Theme.ZeroChat" parent="android:Theme.Material.NoActionBar"><item name="android:statusBarColor">@android:color/transparent</item><item name="android:navigationBarColor">@android:color/transparent</item></style></resources>
           EOF
-
-          # Icono dummy para evitar error de recurso faltante
           echo "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg==" | base64 -d > app/src/main/res/mipmap-hdpi/ic_launcher.png
 
+      - name: Generar Gradle Wrapper Completo
+        run: |
+          gradle wrapper --gradle-version 8.6
+          chmod +x gradlew
+
       - name: Construir APK Debug
-        uses: gradle/gradle-build-action@v2
-        with:
-          arguments: assembleDebug --no-daemon
+        run: ./gradlew assembleDebug --no-daemon
 
       - name: Subir Artefacto
         uses: actions/upload-artifact@v4
