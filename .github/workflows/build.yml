@@ -1,34 +1,31 @@
-name: ZeroChat – Build Funcional SHΔDØW v2
+name: ZeroChat – Build Funcional SHΔDØW v3 (Node22 Ready)
 on:
   push:
     branches: [main]
   workflow_dispatch:
+
+env:
+  NODE_OPTIONS: "--no-deprecation"
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repositorio
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Configurar JDK 17
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           java-version: '17'
           distribution: 'temurin'
 
       - name: Generar Proyecto ZeroChat Completo
         run: |
-          # ============================================================
-          # ESTRUCTURA DE DIRECTORIOS
-          # ============================================================
           mkdir -p app/src/main/java/com/zeroclone/app/{domain/{model,repository,usecase},data/{datasource/local,repository},di,presentation/{navigation,theme,screen/{login,chat,webview}}}
           mkdir -p app/src/main/res/{values,mipmap-hdpi}
           mkdir -p gradle/wrapper
 
-          # ============================================================
-          # GRADLE WRAPPER PROPERTIES (SOLO CONFIG, NO BINARIOS)
-          # ============================================================
           cat > gradle/wrapper/gradle-wrapper.properties << 'EOF'
           distributionBase=GRADLE_USER_HOME
           distributionPath=wrapper/dists
@@ -46,9 +43,6 @@ jobs:
           android.nonTransitiveRClass=true
           EOF
 
-          # ============================================================
-          # ROOT BUILD.GRADLE.KTS
-          # ============================================================
           cat > build.gradle.kts << 'EOF'
           plugins {
               id("com.android.application") version "8.2.2" apply false
@@ -57,99 +51,27 @@ jobs:
           }
           EOF
 
-          # ============================================================
-          # SETTINGS.GRADLE.KTS
-          # ============================================================
           cat > settings.gradle.kts << 'EOF'
-          pluginManagement {
-              repositories { google(); mavenCentral(); gradlePluginPortal() }
-          }
-          dependencyResolutionManagement {
-              repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
-              repositories { google(); mavenCentral() }
-          }
+          pluginManagement { repositories { google(); mavenCentral(); gradlePluginPortal() } }
+          dependencyResolutionManagement { repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS); repositories { google(); mavenCentral() } }
           rootProject.name = "ZeroChat"
           include(":app")
           EOF
 
-          # ============================================================
-          # APP BUILD.GRADLE.KTS
-          # ============================================================
           cat > app/build.gradle.kts << 'EOF'
-          plugins {
-              id("com.android.application")
-              id("org.jetbrains.kotlin.android")
-              id("org.jetbrains.kotlin.plugin.serialization")
-          }
-          android {
-              namespace = "com.zeroclone.app"
-              compileSdk = 34
-              defaultConfig {
-                  applicationId = "com.zeroclone.app"
-                  minSdk = 24
-                  targetSdk = 34
-                  versionCode = 1
-                  versionName = "1.0.0"
-                  vectorDrawables { useSupportLibrary = true }
-              }
-              buildTypes { release { isMinifyEnabled = false; proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro") } }
-              compileOptions { sourceCompatibility = JavaVersion.VERSION_17; targetCompatibility = JavaVersion.VERSION_17 }
-              kotlinOptions { jvmTarget = "17" }
-              buildFeatures { compose = true }
-              composeOptions { kotlinCompilerExtensionVersion = "1.5.8" }
-              packaging { resources { excludes += "/META-INF/{AL2.0,LGPL2.1}" } }
-          }
-          dependencies {
-              val composeBom = platform("androidx.compose:compose-bom:2024.02.00")
-              implementation(composeBom)
-              implementation("androidx.compose.ui:ui")
-              implementation("androidx.compose.ui:ui-graphics")
-              implementation("androidx.compose.ui:ui-tooling-preview")
-              implementation("androidx.compose.material3:material3")
-              implementation("androidx.compose.material:material-icons-extended")
-              implementation("androidx.navigation:navigation-compose:2.7.7")
-              implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.7.0")
-              implementation("androidx.lifecycle:lifecycle-runtime-compose:2.7.0")
-              implementation("androidx.activity:activity-compose:1.8.2")
-              implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
-              implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.2")
-              implementation("androidx.datastore:datastore-preferences:1.1.0")
-              implementation("io.insert-koin:koin-android:3.5.3")
-              implementation("io.insert-koin:koin-androidx-compose:3.5.3")
-              implementation("androidx.security:security-crypto:1.1.0-alpha06")
-          }
+          plugins { id("com.android.application"); id("org.jetbrains.kotlin.android"); id("org.jetbrains.kotlin.plugin.serialization") }
+          android { namespace = "com.zeroclone.app"; compileSdk = 34; defaultConfig { applicationId = "com.zeroclone.app"; minSdk = 24; targetSdk = 34; versionCode = 1; versionName = "1.0.0"; vectorDrawables { useSupportLibrary = true } }; buildTypes { release { isMinifyEnabled = false; proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro") } }; compileOptions { sourceCompatibility = JavaVersion.VERSION_17; targetCompatibility = JavaVersion.VERSION_17 }; kotlinOptions { jvmTarget = "17" }; buildFeatures { compose = true }; composeOptions { kotlinCompilerExtensionVersion = "1.5.8" }; packaging { resources { excludes += "/META-INF/{AL2.0,LGPL2.1}" } } }
+          dependencies { val composeBom = platform("androidx.compose:compose-bom:2024.02.00"); implementation(composeBom); implementation("androidx.compose.ui:ui"); implementation("androidx.compose.ui:ui-graphics"); implementation("androidx.compose.ui:ui-tooling-preview"); implementation("androidx.compose.material3:material3"); implementation("androidx.compose.material:material-icons-extended"); implementation("androidx.navigation:navigation-compose:2.7.7"); implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.7.0"); implementation("androidx.lifecycle:lifecycle-runtime-compose:2.7.0"); implementation("androidx.activity:activity-compose:1.8.2"); implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3"); implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.2"); implementation("androidx.datastore:datastore-preferences:1.1.0"); implementation("io.insert-koin:koin-android:3.5.3"); implementation("io.insert-koin:koin-androidx-compose:3.5.3"); implementation("androidx.security:security-crypto:1.1.0-alpha06") }
           EOF
           touch app/proguard-rules.pro
 
-          # ============================================================
-          # ANDROIDMANIFEST.XML
-          # ============================================================
           cat > app/src/main/AndroidManifest.xml << 'EOF'
-          <?xml version="1.0" encoding="utf-8"?>
-          <manifest xmlns:android="http://schemas.android.com/apk/res/android">
-              <uses-permission android:name="android.permission.INTERNET" />
-              <application android:name=".ZeroChatApplication" android:allowBackup="true" android:icon="@mipmap/ic_launcher" android:label="@string/app_name" android:supportsRtl="true" android:theme="@style/Theme.ZeroChat">
-                  <activity android:name=".MainActivity" android:exported="true" android:theme="@style/Theme.ZeroChat">
-                      <intent-filter><action android:name="android.intent.action.MAIN" /><category android:name="android.intent.category.LAUNCHER" /></intent-filter>
-                  </activity>
-                  <activity android:name=".presentation.screen.webview.WebViewActivity" android:configChanges="orientation|screenSize" android:exported="false" />
-              </application>
-          </manifest>
+          <?xml version="1.0" encoding="utf-8"?><manifest xmlns:android="http://schemas.android.com/apk/res/android"><uses-permission android:name="android.permission.INTERNET" /><application android:name=".ZeroChatApplication" android:allowBackup="true" android:icon="@mipmap/ic_launcher" android:label="@string/app_name" android:supportsRtl="true" android:theme="@style/Theme.ZeroChat"><activity android:name=".MainActivity" android:exported="true" android:theme="@style/Theme.ZeroChat"><intent-filter><action android:name="android.intent.action.MAIN" /><category android:name="android.intent.category.LAUNCHER" /></intent-filter></activity><activity android:name=".presentation.screen.webview.WebViewActivity" android:configChanges="orientation|screenSize" android:exported="false" /></application></manifest>
           EOF
 
-          # ============================================================
-          # DOMAIN LAYER
-          # ============================================================
           cat > app/src/main/java/com/zeroclone/app/domain/model/Provider.kt << 'EOF'
           package com.zeroclone.app.domain.model
-          enum class Provider(val displayName: String, val url: String, val defaultModel: String) {
-              DeepSeek("DeepSeek", "https://chat.deepseek.com/", "deepseek-chat"),
-              QwenIntl("Qwen International", "https://chat.qwen.ai/", "Qwen-3.5-Plus"),
-              Kimi("Kimi", "https://kimi.moonshot.cn/", "moonshot-v1-8k"),
-              Claude("Claude Web", "https://claude.ai/", "claude-sonnet-4-6"),
-              ChatGPT("ChatGPT Web", "https://chat.openai.com/", "GPT-4"),
-              Gemini("Gemini Web", "https://gemini.google.com/", "gemini-pro")
-          }
+          enum class Provider(val displayName: String, val url: String, val defaultModel: String) { DeepSeek("DeepSeek", "https://chat.deepseek.com/", "deepseek-chat"), QwenIntl("Qwen International", "https://chat.qwen.ai/", "Qwen-3.5-Plus"), Kimi("Kimi", "https://kimi.moonshot.cn/", "moonshot-v1-8k"), Claude("Claude Web", "https://claude.ai/", "claude-sonnet-4-6"), ChatGPT("ChatGPT Web", "https://chat.openai.com/", "GPT-4"), Gemini("Gemini Web", "https://gemini.google.com/", "gemini-pro") }
           EOF
 
           cat > app/src/main/java/com/zeroclone/app/domain/model/Message.kt << 'EOF'
@@ -180,64 +102,34 @@ jobs:
           cat > app/src/main/java/com/zeroclone/app/domain/usecase/ExtractTokenUseCase.kt << 'EOF'
           package com.zeroclone.app.domain.usecase
           import com.zeroclone.app.domain.model.Provider; import com.zeroclone.app.domain.repository.AuthRepository
-          class ExtractTokenUseCase(private val authRepository: AuthRepository) {
-              suspend operator fun invoke(provider: Provider, rawJson: String?): Result<Unit> {
-                  if (rawJson.isNullOrBlank()) return Result.failure(Exception("Empty storage"))
-                  val tokenRegex = Regex(""""(?:token|access_token|jwt)"\s*:\s*"([^"]{20,})"""")
-                  val match = tokenRegex.find(rawJson); val token = match?.groupValues?.get(1) ?: rawJson.take(50)
-                  return if (token.isNotBlank()) { authRepository.saveToken(provider, token); Result.success(Unit) } else Result.failure(Exception("No valid token found"))
-              }
-          }
+          class ExtractTokenUseCase(private val authRepository: AuthRepository) { suspend operator fun invoke(provider: Provider, rawJson: String?): Result<Unit> { if (rawJson.isNullOrBlank()) return Result.failure(Exception("Empty storage")); val tokenRegex = Regex(""""(?:token|access_token|jwt)"\s*:\s*"([^"]{20,})""""); val match = tokenRegex.find(rawJson); val token = match?.groupValues?.get(1) ?: rawJson.take(50); return if (token.isNotBlank()) { authRepository.saveToken(provider, token); Result.success(Unit) } else Result.failure(Exception("No valid token found")) } }
           EOF
 
-          # ============================================================
-          # DATA LAYER
-          # ============================================================
           cat > app/src/main/java/com/zeroclone/app/data/datasource/local/TokenStorage.kt << 'EOF'
           package com.zeroclone.app.data.datasource.local
           import android.content.Context; import androidx.security.crypto.EncryptedSharedPreferences; import androidx.security.crypto.MasterKey
-          class TokenStorage(context: Context) {
-              private val masterKey = MasterKey.Builder(context).setKeyScheme(MasterKey.KeyScheme.AES256_GCM).build()
-              private val prefs = EncryptedSharedPreferences.create(context, "zero_tokens_secure", masterKey, EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV, EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM)
-              fun save(key: String, value: String) = prefs.edit().putString(key, value).apply(); fun get(key: String): String? = prefs.getString(key, null)
-          }
+          class TokenStorage(context: Context) { private val masterKey = MasterKey.Builder(context).setKeyScheme(MasterKey.KeyScheme.AES256_GCM).build(); private val prefs = EncryptedSharedPreferences.create(context, "zero_tokens_secure", masterKey, EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV, EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM); fun save(key: String, value: String) = prefs.edit().putString(key, value).apply(); fun get(key: String): String? = prefs.getString(key, null) }
           EOF
 
           cat > app/src/main/java/com/zeroclone/app/data/datasource/local/ChatLocalDataSource.kt << 'EOF'
           package com.zeroclone.app.data.datasource.local
           import android.content.Context; import androidx.datastore.preferences.core.edit; import androidx.datastore.preferences.core.stringPreferencesKey; import androidx.datastore.preferences.preferencesDataStore; import com.zeroclone.app.domain.model.Chat; import kotlinx.coroutines.flow.Flow; import kotlinx.coroutines.flow.map; import kotlinx.serialization.encodeToString; import kotlinx.serialization.json.Json
           val Context.chatDataStore by preferencesDataStore(name = "chats_v1")
-          class ChatLocalDataSource(private val context: Context) {
-              private val json = Json { ignoreUnknownKeys = true }; private val KEY = stringPreferencesKey("all_chats")
-              val chats: Flow<List<Chat>> = context.chatDataStore.data.map { it[KEY]?.let { json.decodeFromString<List<Chat>>(it) } ?: emptyList() }
-              suspend fun save(chats: List<Chat>) { context.chatDataStore.edit { it[KEY] = json.encodeToString(chats) } }
-          }
+          class ChatLocalDataSource(private val context: Context) { private val json = Json { ignoreUnknownKeys = true }; private val KEY = stringPreferencesKey("all_chats"); val chats: Flow<List<Chat>> = context.chatDataStore.data.map { it[KEY]?.let { json.decodeFromString<List<Chat>>(it) } ?: emptyList() }; suspend fun save(chats: List<Chat>) { context.chatDataStore.edit { it[KEY] = json.encodeToString(chats) } } }
           EOF
 
           cat > app/src/main/java/com/zeroclone/app/data/repository/AuthRepositoryImpl.kt << 'EOF'
           package com.zeroclone.app.data.repository
           import com.zeroclone.app.data.datasource.local.TokenStorage; import com.zeroclone.app.domain.model.Provider; import com.zeroclone.app.domain.repository.AuthRepository
-          class AuthRepositoryImpl(private val storage: TokenStorage) : AuthRepository {
-              override suspend fun saveToken(provider: Provider, token: String) = storage.save(provider.name, token)
-              override suspend fun getToken(provider: Provider): String? = storage.get(provider.name)
-              override suspend fun hasToken(provider: Provider): Boolean = storage.get(provider.name) != null
-          }
+          class AuthRepositoryImpl(private val storage: TokenStorage) : AuthRepository { override suspend fun saveToken(provider: Provider, token: String) = storage.save(provider.name, token); override suspend fun getToken(provider: Provider): String? = storage.get(provider.name); override suspend fun hasToken(provider: Provider): Boolean = storage.get(provider.name) != null }
           EOF
 
           cat > app/src/main/java/com/zeroclone/app/data/repository/ChatRepositoryImpl.kt << 'EOF'
           package com.zeroclone.app.data.repository
           import com.zeroclone.app.data.datasource.local.ChatLocalDataSource; import com.zeroclone.app.domain.model.*; import com.zeroclone.app.domain.repository.ChatRepository; import kotlinx.coroutines.delay; import kotlinx.coroutines.flow.Flow; import kotlinx.coroutines.flow.first
-          class ChatRepositoryImpl(private val local: ChatLocalDataSource) : ChatRepository {
-              override fun observeChats(): Flow<List<Chat>> = local.chats
-              override suspend fun createChat(providerName: String, model: String): Chat { val new = Chat(providerName = providerName, model = model); local.save(listOf(new) + local.chats.first()); return new }
-              override suspend fun addMessage(chatId: String, message: Message) { val current = local.chats.first().toMutableList(); val idx = current.indexOfFirst { it.id == chatId }; if (idx != -1) { current[idx] = current[idx].copy(messages = current[idx].messages + message); local.save(current) } }
-              override suspend fun generateResponse(chatId: String, userContent: String): Message { delay(800); val chat = local.chats.first().find { it.id == chatId }; val msg = Message(role = Role.ASSISTANT, content = "[${chat?.providerName ?: "AI"}] Respuesta simulada para: \"$userContent\".\n\nNota: Backend simulado. Integra API real en producción."); addMessage(chatId, msg); return msg }
-          }
+          class ChatRepositoryImpl(private val local: ChatLocalDataSource) : ChatRepository { override fun observeChats(): Flow<List<Chat>> = local.chats; override suspend fun createChat(providerName: String, model: String): Chat { val new = Chat(providerName = providerName, model = model); local.save(listOf(new) + local.chats.first()); return new }; override suspend fun addMessage(chatId: String, message: Message) { val current = local.chats.first().toMutableList(); val idx = current.indexOfFirst { it.id == chatId }; if (idx != -1) { current[idx] = current[idx].copy(messages = current[idx].messages + message); local.save(current) } }; override suspend fun generateResponse(chatId: String, userContent: String): Message { delay(800); val chat = local.chats.first().find { it.id == chatId }; val msg = Message(role = Role.ASSISTANT, content = "[${chat?.providerName ?: "AI"}] Respuesta simulada para: \"$userContent\".\n\nNota: Backend simulado. Integra API real en producción."); addMessage(chatId, msg); return msg } }
           EOF
 
-          # ============================================================
-          # DI & APPLICATION
-          # ============================================================
           cat > app/src/main/java/com/zeroclone/app/di/AppModule.kt << 'EOF'
           package com.zeroclone.app.di
           import com.zeroclone.app.data.datasource.local.*; import com.zeroclone.app.data.repository.*; import com.zeroclone.app.domain.repository.*; import com.zeroclone.app.domain.usecase.ExtractTokenUseCase; import org.koin.android.ext.koin.androidContext; import org.koin.dsl.module
@@ -250,9 +142,6 @@ jobs:
           class ZeroChatApplication : Application() { override fun onCreate() { super.onCreate(); startKoin { androidContext(this@ZeroChatApplication); modules(appModule) } } }
           EOF
 
-          # ============================================================
-          # PRESENTATION
-          # ============================================================
           cat > app/src/main/java/com/zeroclone/app/presentation/theme/Theme.kt << 'EOF'
           package com.zeroclone.app.presentation.theme
           import androidx.compose.material3.*; import androidx.compose.runtime.Composable; import androidx.compose.ui.graphics.Color
@@ -314,7 +203,7 @@ jobs:
         run: ./gradlew assembleDebug --no-daemon
 
       - name: Subir Artefacto
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: zerochat-functional-debug
           path: app/build/outputs/apk/debug/app-debug.apk
