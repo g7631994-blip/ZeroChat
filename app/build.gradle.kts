@@ -1,4 +1,4 @@
-import java.util.Properties
+importa java.util.Properties
 
 plugins {
     id("com.android.application")
@@ -8,7 +8,7 @@ plugins {
 
 val localProperties = Properties().apply {
     val file = rootProject.file("local.properties")
-    if (file.exists()) load(file.inputStream())
+    if (file.exists())load(file.inputStream())
 }
 
 android {
@@ -67,5 +67,5 @@ dependencies {
     implementation(composeBom)
     implementation("androidx.compose.material3:material3")
     implementation("androidx.compose.ui:ui-tooling-preview")
-    implementation("androidx.activity:activity-compose:1.8.**SHΔDØW CORE V99 – ENTREGA FINAL COMPLETA**
+    implementation("androidx.activity:activity-compose:1.8
 
