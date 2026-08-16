@@ -3,26 +3,34 @@ package com.zeroclone.app.data.remote
 import com.zeroclone.app.data.local.CredentialStore
 import com.zeroclone.app.domain.model.Message
 import com.zeroclone.app.domain.model.Provider
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.buildJsonArray
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
+import kotlinx.serialization.json.putJsonArray
+import kotlinx.serialization.json.putJsonObject
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.RequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
-import org.json.JSONArray
-import org.json.JSONObject
 
-class DeepSeekApiClient(credentialStore: CredentialStore) :
-    BaseApiClient("https://chat.deepseek.com", Provider.DEEPSEEK, credentialStore) {
+class DeepSeekApiClient(store: CredentialStore) : BaseApiClient(
+    baseUrl = Provider.DEEPSEEK.baseUrl,
+    provider = Provider.DEEPSEEK,
+    credentialStore = store
+) {
+    override fun getEndpoint(): String = "https://chat.deepseek.com/api/v0/chat/completion"
 
     override fun buildRequestBody(messages: List<Message>): RequestBody {
-        val json = JSONObject().apply {
-            put("model", "deepseek-chat")
-            put("messages", JSONArray().apply {
+        val json = buildJsonObject {
+            put("model", "deepseek_chat")
+            putJsonArray("messages") {
                 messages.forEach { msg ->
-                    put(JSONObject().apply {
+                    add(buildJsonObject {
                         put("role", msg.role.name.lowercase())
                         put("content", msg.content)
                     })
                 }
-            })
+            }
             put("stream", true)
         }
         return json.toString().toRequestBody("application/json".toMediaType())
@@ -30,11 +38,8 @@ class DeepSeekApiClient(credentialStore: CredentialStore) :
 
     override fun parseSseData(data: String): String? {
         return try {
-            val json = JSONObject(data)
-            json.getJSONArray("choices")
-                .getJSONObject(0)
-                .optJSONObject("delta")
-                ?.optString("content", "")
-        } catch (_: Exception) { null }
+            val json = Json.parseToJsonElement(data)
+            json.jsonObject["choices"]?.jsonArray?.get(0)?.jsonObject?.get("delta")?.jsonObject?.get("content")?.jsonPrimitive?.content
+        } catch (e: Exception) { null }
     }
 }
