@@ -1,39 +1,35 @@
 package com.zeroclone.app.data.local
 
 import android.content.Context
-import androidx.datastore.core.DataStore
-import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import com.zeroclone.app.domain.model.Provider
-import com.zeroclone.app.service.SessionCredentials
+import com.zeroclone.app.domain.model.SessionCredentials
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.map
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 
-private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "zerochat_creds")
+private val Context.dataStore by preferencesDataStore(name = "zero_credentials")
 
 class CredentialStore(private val context: Context) {
     private val json = Json { ignoreUnknownKeys = true }
 
-    suspend fun save(provider: Provider, credentials: SessionCredentials) {
-        val key = stringPreferencesKey("creds_${provider.name}")
+    suspend fun save(provider: Provider, creds: SessionCredentials) {
+        val key = stringPreferencesKey(provider.name)
         context.dataStore.edit { prefs ->
-            prefs[key] = json.encodeToString(credentials)
+            prefs[key] = json.encodeToString(creds)
         }
     }
 
     suspend fun load(provider: Provider): SessionCredentials? {
-        val key = stringPreferencesKey("creds_${provider.name}")
-        return context.dataStore.data.map { prefs ->
-            prefs[key]?.let { json.decodeFromString<SessionCredentials>(it) }
-        }.first()
+        val key = stringPreferencesKey(provider.name)
+        val prefs = context.dataStore.data.first()
+        return prefs[key]?.let { json.decodeFromString<SessionCredentials>(it) }
     }
 
     suspend fun clear(provider: Provider) {
-        val key = stringPreferencesKey("creds_${provider.name}")
+        val key = stringPreferencesKey(provider.name)
         context.dataStore.edit { it.remove(key) }
     }
 }
