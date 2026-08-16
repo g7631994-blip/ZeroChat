@@ -2,7 +2,11 @@ package com.zeroclone.app.domain.model
 
 import kotlinx.serialization.Serializable
 
-enum class Role { USER, ASSISTANT, SYSTEM }
+enum class Role {
+    USER,
+    ASSISTANT,
+    SYSTEM
+}
 
 data class Message(
     val id: String,
@@ -22,9 +26,9 @@ enum class Provider(val baseUrl: String, val loginUrl: String) {
     QWEN("https://qwenlm.github.io", "https://chat.qwenlm.ai"),
     KIMI("https://kimi.moonshot.cn", "https://kimi.moonshot.cn"),
     CLAUDE("https://claude.ai", "https://claude.ai/login"),
-    CHATGPT("https://chat.openai.com", "https://chat.openai.com/auth/login"),
+    CHATGPT("https://chatgpt.com", "https://chatgpt.com/auth/login"),
     GEMINI("https://gemini.google.com", "https://accounts.google.com"),
-    GROK("https://grok.com", "https://x.com/i/flow/login"),
+    GROK("https://grok.com", "https://grok.com"),
     GLM("https://chatglm.cn", "https://chatglm.cn/login"),
     MIMO("https://mimo.ai", "https://mimo.ai/login"),
     MANUS("https://manus.im", "https://manus.im/login"),
@@ -38,5 +42,10 @@ enum class Provider(val baseUrl: String, val loginUrl: String) {
 data class SessionCredentials(
     val cookies: String,
     val userAgent: String,
-    val provider: String
+    val provider: String,
+    val accessToken: String? = null,
+    val organizationId: String? = null,
+    val conversationId: String? = null,
+    val csrfToken: String? = null,
+    val rawSession: String? = null
 )
