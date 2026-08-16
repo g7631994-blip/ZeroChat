@@ -45,6 +45,18 @@ abstract class BaseApiClient(
         cachedCredentials?.let { creds ->
             builder.addHeader("Cookie", creds.cookies)
             builder.addHeader("User-Agent", creds.userAgent)
+
+            if (!creds.accessToken.isNullOrEmpty()) {
+                builder.header("Authorization", "Bearer ${creds.accessToken}")
+            }
+
+            if (!creds.organizationId.isNullOrEmpty()) {
+                builder.header("X-Organization-Id", creds.organizationId)
+            }
+
+            if (!creds.csrfToken.isNullOrEmpty()) {
+                builder.header("X-CSRF-Token", creds.csrfToken)
+            }
         }
     }
 
