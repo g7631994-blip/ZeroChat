@@ -1,83 +1,66 @@
 package com.zeroclone.app.service
 
 import android.annotation.SuppressLint
-import android.content.Context
 import android.webkit.JavascriptInterface
-import android.webkit.WebResourceError
-import android.webkit.WebResourceRequest
 import android.webkit.WebView
-import android.webkit.WebViewClient
-import kotlinx.coroutines.channels.awaitClose
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.callbackFlow
-import kotlinx.serialization.Serializable
-import org.json.JSONObject
+import com.zeroclone.app.domain.model.SessionCredentials
 
-@Serializable
-data class SessionCredentials(
-    val cookies: String,
-    val localStorage: String,
-    val userAgent: String
-)
-
-class ZeroTokenExtractor(private val context: Context) {
+class ZeroTokenExtractor(private val webView: WebView) {
 
     @SuppressLint("SetJavaScriptEnabled")
-    fun extractSession(providerUrl: String): Flow<SessionCredentials> = callbackFlow {
-        val webView = WebView(context).apply {
-            settings.javaScriptEnabled = true
-            settings.domStorageEnabled = true
-
-            addJavascriptInterface(object {
-                @JavascriptInterface
-                fun onCredentialsExtracted(json: String) {
-                    try {
-                        val obj = JSONObject(json)
-                        val creds = SessionCredentials(
-                            cookies = obj.optString("cookies", ""),
-                            localStorage = obj.optJSONObject("localStorage")?.toString() ?: "{}",
-                            userAgent = obj.optString("userAgent", "")
-                        )
-                        trySend(creds)
-                        close()
-                    } catch (e: Exception) {
-                        close(e)
-                    }
-                }
-            }, "ZeroChatBridge")
-
-            webViewClient = object : WebViewClient() {
-                override fun onPageFinished(view: WebView?, url: String?) {
-                    val script = """
-                        (function() {
-                            try {
-                                var data = {
-                                    cookies: document.cookie,
-                                    localStorage: JSON.parse(JSON.stringify(localStorage)),
-                                    userAgent: navigator.userAgent
-                                };
-                                ZeroChatBridge.onCredentialsExtracted(JSON.stringify(data));
-                            } catch(e) {}
-                        })();
-                    """.trimIndent()
-                    view?.evaluateJavascript(script, null)
-                }
-
-                override fun onReceivedError(
-                    view: WebView?, request: WebResourceRequest?, error: WebResourceError?
-                ) {
-                    if (request?.isForMainFrame == true) {
-                        close(RuntimeException("Load failed: ${error?.description}"))
-                    }
-                }
-            }
-
-            loadUrl(providerUrl)
+    fun configureWebView(onResult: (SessionCredentials) -> Unit) {
+        webView.settings.apply {
+            javaScriptEnabled = true
+            domStorageEnabled = true
+            databaseEnabled = true
+            // MÓDULO OMEGA 3: CAMUFLAJE USER-AGENT
+            userAgentString = userAgentString
+                .replace("; wv", "")
+                .replace("Mobile", "eliboM") 
         }
 
-        awaitClose {
-            webView.stopLoading()
-            webView.destroy()
+        // Bridge JS -> Kotlin
+        webView.addJavascriptInterface(JsBridge(onResult), "AndroidBridge")
+    }
+
+    fun injectStealthAndExtract() {
+        // Inyección de Mutación de Entorno y Extracción Periódica
+        val stealthJs = """
+            (function() {
+                // Anti-detección básica
+                Object.defineProperty(navigator, 'webdriver', {get: () => undefined});
+                window.chrome = { runtime: {} };
+                
+                // Mutación de permisos
+                const originalQuery = window.navigator.permissions.query;
+                window.navigator.permissions.query = (parameters) => (
+                    parameters.name === 'notifications' ?
+                    Promise.resolve({ state: Notification.permission }) :
+                    originalQuery(parameters)
+                );
+
+                // Monitor de inyección de Cookies (Ejecuta cada 2s hasta encontrar sesión)
+                const interval = setInterval(() => {
+                    const cookies = document.cookie;
+                    const ua = navigator.userAgent;
+                    // Detectar presencia de tokens de sesión comunes o DOM de chat
+                    if (cookies.length > 50 || document.querySelector('[class*="chat"]') || document.querySelector('[id*="chat"]')) {
+                        clearInterval(interval);
+                        AndroidBridge.postCookies(cookies, ua);
+                    }
+                }, 2000);
+            })();
+        """
+        webView.evaluateJavascript(stealthJs, null)
+    }
+
+    private class JsBridge(private val onResult: (SessionCredentials) -> Unit) {
+        @JavascriptInterface
+        fun postCookies(cookies: String, ua: String) {
+            // Filtrado básico para evitar enviar cookies vacías
+            if (cookies.isNotBlank()) {
+                onResult(SessionCredentials(cookies, ua, ""))
+            }
         }
     }
 }
