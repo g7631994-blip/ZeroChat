@@ -3,11 +3,15 @@ package com.zeroclone.app.data.remote
 import com.zeroclone.app.data.local.CredentialStore
 import com.zeroclone.app.domain.model.Message
 import com.zeroclone.app.domain.model.Provider
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.emitAll
+import kotlinx.coroutines.flow.flow
 import kotlinx.serialization.json.buildJsonArray
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 import kotlinx.serialization.json.putJsonObject
 import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.Request
 import okhttp3.RequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
 import java.util.UUID
@@ -26,6 +30,31 @@ class ChatGptApiClient(
 
     override fun createParser(): StreamChunkParser {
         return ChatGptJsonlParser()
+    }
+
+    override fun buildHeaders(builder: Request.Builder) {
+        super.buildHeaders(builder)
+
+        builder.header("Content-Type", "application/json")
+        builder.header("oai-device-id", "zeroclone-android-core")
+        builder.header("oai-language", "en-US")
+
+        val token = cachedCredentials?.accessToken
+        if (!token.isNullOrEmpty()) {
+            builder.header("Authorization", "Bearer $token")
+        }
+    }
+
+    override fun streamChat(messages: List<Message>): Flow<String> = flow {
+        if (cachedCredentials?.accessToken.isNullOrEmpty()) {
+            emit(
+                "⚠️ ChatGPT: falta accessToken.\n" +
+                "Inicia sesión nuevamente para capturar /api/auth/session."
+            )
+            return@flow
+        }
+
+        emitAll(super.streamChat(messages))
     }
 
     override fun buildRequestBody(messages: List<Message>): RequestBody {
