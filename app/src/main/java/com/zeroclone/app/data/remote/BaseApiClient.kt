@@ -3,6 +3,7 @@ package com.zeroclone.app.data.remote
 import com.zeroclone.app.data.local.CredentialStore
 import com.zeroclone.app.domain.model.Message
 import com.zeroclone.app.domain.model.Provider
+import com.zeroclone.app.domain.model.SessionCredentials
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
@@ -20,52 +21,84 @@ abstract class BaseApiClient(
 ) {
     private val client = NetworkClient.create()
     private val factory = EventSources.createFactory(client)
-    
-    // Caché en memoria para evitar bloqueos en interceptors
-    protected var cachedCredentials: com.zeroclone.app.domain.model.SessionCredentials? = null
 
-    fun updateCredentials(creds: com.zeroclone.app.domain.model.SessionCredentials?) { 
-        cachedCredentials = creds 
+    protected var cachedCredentials: SessionCredentials? = null
+
+    fun updateCredentials(creds: SessionCredentials?) {
+        cachedCredentials = creds
     }
 
     abstract fun buildRequestBody(messages: List<Message>): RequestBody
-    abstract fun parseSseData(data: String): String?
-    abstract fun getEndpoint(): String
 
-    fun streamChat(messages: List<Message>): Flow<String> = callbackFlow {
-        val creds = cachedCredentials ?: throw IllegalStateException("No credentials loaded")
+    open fun getEndpoint(): String {
+        return EndpointRegistry.get(provider).chatUrl
+    }
 
-        val request = Request.Builder()
+    open fun createParser(): StreamChunkParser {
+        return OpenAiSseParser()
+    }
+
+    open fun buildHeaders(builder: Request.Builder) {
+        builder.addHeader("Accept", "text/event-stream")
+        builder.addHeader("Referer", baseUrl)
+
+        cachedCredentials?.let { creds ->
+            builder.addHeader("Cookie", creds.cookies)
+            builder.addHeader("User-Agent", creds.userAgent)
+        }
+    }
+
+    open fun streamChat(messages: List<Message>): Flow<String> = callbackFlow {
+        val creds = cachedCredentials
+
+        if (creds == null) {
+            close(IllegalStateException("No hay credenciales cargadas para ${provider.name}"))
+            return@callbackFlow
+        }
+
+        val requestBuilder = Request.Builder()
             .url(getEndpoint())
             .post(buildRequestBody(messages))
-            .addHeader("Cookie", creds.cookies)
-            .addHeader("User-Agent", creds.userAgent)
-            .addHeader("Accept", "text/event-stream")
-            .addHeader("Referer", baseUrl)
-            .build()
+
+        buildHeaders(requestBuilder)
+
+        val parser = createParser().apply { reset() }
 
         val listener = object : EventSourceListener() {
-            override fun onEvent(eventSource: EventSource, id: String?, type: String?, data: String) {
+            override fun onEvent(
+                eventSource: EventSource,
+                id: String?,
+                type: String?,
+                data: String
+            ) {
                 if (data == "[DONE]") {
                     close()
                     return
                 }
-                val parsed = parseSseData(data)
+
+                val parsed = parser.parse(data)
                 if (!parsed.isNullOrEmpty()) {
                     trySend(parsed)
                 }
             }
 
-            override fun onFailure(eventSource: EventSource, t: Throwable?, response: Response?) {
+            override fun onFailure(
+                eventSource: EventSource,
+                t: Throwable?,
+                response: Response?
+            ) {
                 close(t ?: Exception("SSE Stream Failed: ${response?.code}"))
             }
-            
+
             override fun onClosed(eventSource: EventSource) {
                 close()
             }
         }
 
-        val eventSource = factory.newEventSource(request, listener)
-        awaitClose { eventSource.cancel() }
+        val eventSource = factory.newEventSource(requestBuilder.build(), listener)
+
+        awaitClose {
+            eventSource.cancel()
+        }
     }
 }
