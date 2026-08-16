@@ -13,7 +13,11 @@ import kotlinx.serialization.json.Json
 private val Context.dataStore by preferencesDataStore(name = "zero_credentials")
 
 class CredentialStore(private val context: Context) {
-    private val json = Json { ignoreUnknownKeys = true }
+
+    private val json = Json {
+        ignoreUnknownKeys = true
+        encodeDefaults = true
+    }
 
     suspend fun save(provider: Provider, creds: SessionCredentials) {
         val key = stringPreferencesKey(provider.name)
@@ -25,7 +29,13 @@ class CredentialStore(private val context: Context) {
     suspend fun load(provider: Provider): SessionCredentials? {
         val key = stringPreferencesKey(provider.name)
         val prefs = context.dataStore.data.first()
-        return prefs[key]?.let { json.decodeFromString<SessionCredentials>(it) }
+        return prefs[key]?.let {
+            try {
+                json.decodeFromString<SessionCredentials>(it)
+            } catch (_: Exception) {
+                null
+            }
+        }
     }
 
     suspend fun clear(provider: Provider) {
