@@ -19,49 +19,69 @@ fun LoginScreen(
     onAuthenticated: () -> Unit,
     viewModel: ChatViewModel = koinViewModel { parametersOf(provider) }
 ) {
-    var isLoading by remember { mutableStateOf(true) }
-    var webViewRef by remember { mutableStateOf<WebView?>(null) }
+    var captured by remember { mutableStateOf(false) }
     var extractor by remember { mutableStateOf<ZeroTokenExtractor?>(null) }
 
-    Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
-        Text("Iniciando sesión en ${provider.name}...", style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onBackground)
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp)
+    ) {
+        Text(
+            text = "Iniciando sesión en ${provider.name}...",
+            style = MaterialTheme.typography.titleLarge,
+            color = MaterialTheme.colorScheme.onBackground
+        )
+
         Spacer(modifier = Modifier.height(8.dp))
-        Text("Completa el login manualmente. La app extraerá la sesión automáticamente.", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f))
+
+        Text(
+            text = "Completa el login manualmente. La app extraerá la sesión automáticamente.",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f)
+        )
+
         Spacer(modifier = Modifier.height(16.dp))
 
-        Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
+        Box(
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxWidth()
+        ) {
             AndroidView(
                 factory = { context ->
                     WebView(context).apply {
-                        webViewRef = this
                         val ext = ZeroTokenExtractor(this)
                         extractor = ext
-                        
-                        ext.configureWebView { creds ->
-                            viewModel.updateSession(creds.cookies, creds.userAgent)
-                            onAuthenticated()
+
+                        ext.configureWebView(provider) { creds ->
+                            if (!captured) {
+                                captured = true
+                                viewModel.updateSession(creds)
+                                onAuthenticated()
+                            }
                         }
-                        
+
                         loadUrl(provider.loginUrl)
-                        // Inyectar tras un pequeño delay para asegurar carga del DOM
-                        postDelayed({ ext.injectStealthAndExtract() }, 1500)
+
+                        postDelayed({
+                            ext.injectStealthAndExtract(provider)
+                        }, 1500)
                     }
                 },
                 modifier = Modifier.fillMaxSize()
             )
-            if (isLoading) {
-                CircularProgressIndicator(modifier = Modifier.align(androidx.compose.ui.Alignment.Center))
-            }
         }
-        
+
         Spacer(modifier = Modifier.height(16.dp))
+
         Button(
-            onClick = { 
-                extractor?.injectStealthAndExtract() // Forzar re-intento de extracción
+            onClick = {
+                extractor?.injectStealthAndExtract(provider)
             },
             modifier = Modifier.fillMaxWidth()
         ) {
-            Text("Forzar Extracción de Sesión")
+            Text("Forzar extracción de sesión")
         }
     }
 }
